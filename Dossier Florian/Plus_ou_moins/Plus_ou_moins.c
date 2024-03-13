@@ -3,9 +3,9 @@
 #include <time.h>
 #include <string.h>
 
-int ask_input(const char* message, const char* authorizedinput, int size) {
-	char input;
+char ask_input(const char* message, const char* authorizedinput, int size) {
 	while (1) {
+		char input;
 		int i = 0;
 		printf("%s", message);
 		scanf_s("%c", &input, 1);
@@ -19,14 +19,16 @@ int ask_input(const char* message, const char* authorizedinput, int size) {
 	}
 }
 
-int ask_number(int min, int max) {
+int ask_number(const char* message) {
 	int i;
 	while (1) {
-		printf("Choississez un nombre entre %d et %d : ", min, max);
-		scanf_s("%d", &i);
-		if (min <= i && 1<= max) {
+		printf("%s", message);
+		int IError = scanf_s("%d", &i);
+		if (IError) {
+			while (getchar() != '\n');
 			return i;
 		}
+		while (getchar() != '\n');
 	}
 }
 
@@ -34,20 +36,23 @@ int game()
 {
 	srand(time(NULL));
 	int guess = 0;
-	int min;
+	int min = 0;
 	int max = 0;
-	printf("Choississez la borne minimum :\n");
-	scanf_s("%d", &min);
+	while (min <= 0)
+	{
+		min = ask_number("Choississez la borne minimum : ");
+	}
 	while (max <= min) {
-		printf("Choississez la borne maximum :\n");
-		scanf_s("%d", &max);
+		max = ask_number("Choississez la borne maximum : ");
 	}
 	int nb_try = 6;
 	int random_num = rand() %((max-min) + 1 - 1);
 	random_num += 1 + min;
-	printf("%d\n", random_num);
 	while (guess != random_num) {
-		guess = ask_number(min, max);
+		while(guess < min || guess > max)
+		{
+			guess = ask_number("Choississez un nombre : ");
+		}
 		nb_try--;
 		if (nb_try == 0) {
 			printf("Perdu le nombre a deviner etait %d !\n", random_num);
@@ -66,15 +71,15 @@ int game()
 	return 0;
 }
 
-bool restart() {
-	char replay[256];
-	replay[0] = ask_input("Veux tu rejouer ? y/n : ", "yYnN",25);
-	if (replay[0] == 'y'|| replay[0] == 'Y') {
-		return true;
+int restart() {
+	char replay;
+	replay = ask_input("Veux tu rejouer ? y/n : ", "yYnN",25);
+	if (replay == 'y'|| replay == 'Y') {
+		return 1;
 	}
 	else
 	{
-		return false;
+		return 0;
 	}
 }
 
