@@ -68,7 +68,7 @@ int game()
 		}
 	}
 	printf("You Win !\n");
-	return 0;
+	return random_num;
 }
 
 int restart() {
@@ -84,14 +84,28 @@ int restart() {
 }
 
 int main() {
-	game();
+	int resultat[254] = { 0 };
+	int taille_resultat = 254;
+	int i = 0;
+	int j = 0;
+	resultat[i] = game(); 
 	while (1) {
 		if (restart()) {
-			game();
+			i++;
+			if (i < taille_resultat) {
+				resultat[i] = game();
+			}
+			else
+			{
+				printf("Vous avez fait le nombre de parties maximum !\n");
+			}
 		}
-		else
-		{
-			return 0;
+		printf("Voici les différents nombres a trouves durant votre session :\n");
+		for (j = 0; j < taille_resultat; j++) {
+			if (resultat[j] != 0) {
+				printf("- Partie %d : %d\n", i + 1, resultat[j]);
+			}
 		}
+		return 0;
 	}
 }
