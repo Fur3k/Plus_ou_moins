@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Plus_ou_moins.cpp">
+    <ClCompile Include="Plus_ou_moins.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
