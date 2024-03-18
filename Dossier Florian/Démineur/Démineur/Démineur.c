@@ -12,11 +12,10 @@ typedef struct Tile {
 
 void create_grid() {
     Grid g;
-    g.size = 20;
+    g.size = 5;
     int* l = (int*) malloc(g.size * sizeof(int));
-    int* h = (int*)malloc(g.size * sizeof(int));
     for (int i = 0; i < g.size; i++) {
-        l[i] = 0;
+        l[i] = (int*) malloc(g.size * sizeof(int));
     }
 }
 
