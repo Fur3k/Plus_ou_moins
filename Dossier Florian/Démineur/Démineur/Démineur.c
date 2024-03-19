@@ -34,7 +34,7 @@ int ask_number(const char* message, Grid* grid) {
 
 int place_bomb(Grid* grid) {
     srand(time(NULL));
-    int limit_bomb = 20;
+    int limit_bomb = 10;
     int i = 0;
     while(i < limit_bomb) {
         int random_x = rand() % (grid->size);
@@ -46,6 +46,14 @@ int place_bomb(Grid* grid) {
     }
     return grid;
 }
+
+int test_bomb(int row, int col, Grid* grid) {
+    if (grid->tiles[row][col].isBomb) {
+        return 1;
+    }
+    return 0;
+}
+
 void setvalue(Grid* grid) {
     for (int row = 0; row < grid->size; row++) {
         for (int col = 0; col < grid->size; col++) {
@@ -75,7 +83,7 @@ void setvalue(Grid* grid) {
                         }
                     }
                 }
-                grid->tiles[row][col].near_bomb = val + '0';
+                grid->tiles[row][col].near_bomb = val;
             }
         }
     }
@@ -94,12 +102,7 @@ void create_grid(Grid* grid) {
     }
 }
 
-int test_bomb(int row, int col, Grid* grid) {
-    if (grid->tiles[row][col].isBomb) {
-        return 1;
-    }
-    return 0;
-}
+
 
 void propag(int row, int col, Grid* grid) {
     int row_start = row - 1;
@@ -124,8 +127,8 @@ void propag(int row, int col, Grid* grid) {
             if (!grid->tiles[i][j].isDiscover && !grid->tiles[i][j].isFlag) {
                 if (!test_bomb(i, j, grid)) {
                     grid->tiles[i][j].isDiscover = 1;
-                    if (grid->tiles[i][j].near_bomb != 0) {
-                        grid->tiles[i][j].value = grid->tiles[i][j].near_bomb;
+                    if (grid->tiles[i][j].near_bomb > 0) {
+                        grid->tiles[i][j].value = grid->tiles[i][j].near_bomb + '0';
                     }
                     else
                     {
@@ -150,11 +153,12 @@ void ask_tile(Grid* grid) {
             }
             else
             {
-                if (grid->tiles[row][col].value != '0') {
-                    grid->tiles[row][col].value = grid->tiles[row][col].near_bomb;
+                if (grid->tiles[row][col].near_bomb > 0) {
+                    grid->tiles[row][col].value = grid->tiles[row][col].near_bomb + '0';
                 }
                 else
                 {
+                    grid->tiles[row][col].value = '0';
                     propag(row, col, grid);
                 }
             }
