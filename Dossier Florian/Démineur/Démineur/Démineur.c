@@ -6,8 +6,8 @@ typedef struct Tile {
     int isFlag;
     int isBomb;
     int isDiscover;
-    int near_bomb;
     char value;
+    int near_bomb;
     int x;
     int y;
 }Tile;
@@ -22,24 +22,46 @@ int ask_number(const char* message, Grid* grid) {
     while (1) {
         printf("%s", message);
         int IError = scanf_s("%d", &i);
+        while (getchar() != '\n');
         if (IError) {
             if (i < grid->size && i >= 0) {
-                while (getchar() != '\n');
                 return i;
             }
         }
-        while (getchar() != '\n');
     }
 }
 
-int place_bomb(Grid* grid) {
+typedef struct Coords 
+{
+    int x;
+    int y;
+};
+
+int place_bomb(Grid* grid, int row, int col) {
     srand(time(NULL));
-    int limit_bomb = 10;
+
+    int index1D;
+    int limit_bomb = 30;
     int i = 0;
+    char** list_pos = (char**)malloc(grid->size * sizeof(char*));
+    for (int x = 0; x < grid->size; x++) {
+        list_pos[x] = (int*)malloc(grid->size * sizeof(char));
+        for (int y = 0; y < grid->size; y++) {
+            list_pos[x][y] = grid->tiles[x][y].value ;
+        }
+    }
+    list_pos[row-1][col-1] = '0';
+    list_pos[row-1][col] = '0';
+    list_pos[row-1][col+1] = '0';
+    list_pos[row][col-1] = '0';
+    list_pos[row][col+1] = '0';
+    list_pos[row+1][col-1] = '0';
+    list_pos[row+1][col] = '0';
+    list_pos[row+1][col+1] = '0';
     while(i < limit_bomb) {
         int random_x = rand() % (grid->size);
         int random_y = rand() % (grid->size);
-        if (!grid->tiles[random_x][random_y].isBomb) {
+        if (!grid->tiles[random_x][random_y].isBomb && list_pos[random_x][random_y] != '0') {
             grid->tiles[random_x][random_y].isBomb = 1;
             i++;
         }
@@ -88,6 +110,7 @@ void setvalue(Grid* grid) {
         }
     }
 }
+
 void create_grid(Grid* grid) {
     grid->tiles = (Tile**) malloc(grid->size * sizeof(Tile*));
     for (int i = 0; i < grid->size; i++) {
@@ -101,8 +124,6 @@ void create_grid(Grid* grid) {
         }
     }
 }
-
-
 
 void propag(int row, int col, Grid* grid) {
     int row_start = row - 1;
@@ -141,15 +162,16 @@ void propag(int row, int col, Grid* grid) {
     }
 }
 
-void ask_tile(Grid* grid) {
+int ask_tile(Grid* grid, int first_tile) {
     while (1)
-    {
+    {        
         int row = ask_number("Choississez la ligne : ", grid);
         int col = ask_number("Choississez la colonne : ", grid);
         if (!grid->tiles[row][col].isDiscover && !grid->tiles[row][col].isFlag) {
             grid->tiles[row][col].isDiscover = 1;
             if (test_bomb(row, col, grid)) {
                 grid->tiles[row][col].value = 'B';
+                return 1;
             }
             else
             {
@@ -159,16 +181,67 @@ void ask_tile(Grid* grid) {
                 else
                 {
                     grid->tiles[row][col].value = '0';
+                    if (first_tile) {
+                        place_bomb(grid, row, col);
+                        setvalue(grid);
+                    }
                     propag(row, col, grid);
                 }
             }
             return 0;
+            
+        }
+    }
+}
+
+int place_flag(Grid* grid) {
+    int row = ask_number("Choississez la ligne : ", grid);
+    int col = ask_number("Choississez la colonne : ", grid);
+    if (!grid->tiles[row][col].isDiscover && !grid->tiles[row][col].isFlag) {
+        grid->tiles[row][col].isDiscover = 1;
+        grid->tiles[row][col].isFlag = 1;
+        grid->tiles[row][col].value = 'F';
+    }
+    else if (grid->tiles[row][col].isDiscover && grid->tiles[row][col].isFlag)
+    {
+        grid->tiles[row][col].isDiscover = 0;
+        grid->tiles[row][col].isFlag = 0;
+        grid->tiles[row][col].value = '?';
+    }
+    return 0;
+}
+
+int ask_action(const char* message, Grid* grid) {
+    int i;
+    while (1) {
+        printf("%s", message);
+        int IError = scanf_s("%d", &i);
+        while (getchar() != '\n');
+        if (IError) {
+            if (i == 1) {
+                return ask_tile(grid, 0);
+            }
+            else if (i == 0) {
+                return place_flag(grid);
+            }
         }
     }
 }
 
 void show_grid(Grid* grid) {
+    for (int i = -1; i < grid->size; i++) {
+        if (i == -1) {
+            printf("   |");
+        }
+        else
+        {
+            printf(" 0%d|", i);
+        }
+    }
+
+    printf("\n");
     for (int i = 0; i < grid->size; i++) {
+        printf(" 0%d|", i);
         for (int j = 0; j < grid->size; j++) {
             printf(" %c |", grid->tiles[i][j].value);
         }
@@ -180,11 +253,15 @@ int game() {
     Grid g;
     g.size = 10;
     create_grid(&g);
-    place_bomb(&g);
-    setvalue(&g);
+    show_grid(&g);
+    ask_tile(&g, 1);
     while (1) {
         show_grid(&g);
-        ask_tile(&g);
+        if (ask_action("Appuyez sur 1 pour decouvrir une case et sur 0 pour mettre un drapeau :", &g)) {
+            show_grid(&g);
+            printf("Vous avez perdu !");
+            return 0;
+        }
     }
     return 0;
 }
