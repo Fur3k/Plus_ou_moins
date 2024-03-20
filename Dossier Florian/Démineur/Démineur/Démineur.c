@@ -17,6 +17,7 @@ typedef struct Grid {
     Tile** tiles;
 } Grid;
 
+//Vérification de la valdité de l'input de l'utilisateur
 int ask_number(const char* message, Grid* grid) {
     int i;
     while (1) {
@@ -31,17 +32,11 @@ int ask_number(const char* message, Grid* grid) {
     }
 }
 
-typedef struct Coords 
-{
-    int x;
-    int y;
-};
-
+//Place les bombes dans le Démineur à une position différente de la première tuile découverte et ses tuiles adjacentes
 int place_bomb(Grid* grid, int row, int col) {
     srand(time(NULL));
 
-    int index1D;
-    int limit_bomb = 30;
+    int limit_bomb = grid->size/2;
     int i = 0;
     char** list_pos = (char**)malloc(grid->size * sizeof(char*));
     for (int x = 0; x < grid->size; x++) {
@@ -50,6 +45,7 @@ int place_bomb(Grid* grid, int row, int col) {
             list_pos[x][y] = grid->tiles[x][y].value ;
         }
     }
+    //tuiles adjacentes à la tuile découverte
     list_pos[row-1][col-1] = '0';
     list_pos[row-1][col] = '0';
     list_pos[row-1][col+1] = '0';
@@ -69,6 +65,7 @@ int place_bomb(Grid* grid, int row, int col) {
     return grid;
 }
 
+//Vérifie si la case est une bombe ou non
 int test_bomb(int row, int col, Grid* grid) {
     if (grid->tiles[row][col].isBomb) {
         return 1;
@@ -76,11 +73,13 @@ int test_bomb(int row, int col, Grid* grid) {
     return 0;
 }
 
+//Set la valeur de nearbomb qui sert à savoir le nombre de bombes autour de la tuile
 void setvalue(Grid* grid) {
     for (int row = 0; row < grid->size; row++) {
         for (int col = 0; col < grid->size; col++) {
             if (!test_bomb(row, col, grid)){
                 int val = 0;
+                //Limite des tuiles pour le test des bombes
                 int row_start = row - 1;
                 int col_start = col - 1;
                 int row_end = row + 1;
@@ -111,7 +110,9 @@ void setvalue(Grid* grid) {
     }
 }
 
+//Création du démineur de taille "size"
 void create_grid(Grid* grid) {
+    //Création d'un tableau de dimension 2 contenant des Tile
     grid->tiles = (Tile**) malloc(grid->size * sizeof(Tile*));
     for (int i = 0; i < grid->size; i++) {
         grid->tiles[i] = (Tile*)malloc(grid->size * sizeof(Tile));
@@ -125,6 +126,7 @@ void create_grid(Grid* grid) {
     }
 }
 
+//Permet de découvrir les alentours de la tuile séléctionné tant que la valeur de nearbomb = 0
 void propag(int row, int col, Grid* grid) {
     int row_start = row - 1;
     int col_start = col - 1;
@@ -145,10 +147,12 @@ void propag(int row, int col, Grid* grid) {
     for (int i = row_start; i <= row_end; i++) {
         for (int j = col_start; j <= col_end; j++)
         {
-            if (!grid->tiles[i][j].isDiscover && !grid->tiles[i][j].isFlag) {
+            if (!grid->tiles[i][j].isDiscover && !grid->tiles[i][j].isFlag) //Test si la tuile est caché et qu'il n'y a pas de drapeau
+            {
                 if (!test_bomb(i, j, grid)) {
                     grid->tiles[i][j].isDiscover = 1;
-                    if (grid->tiles[i][j].near_bomb > 0) {
+                    if (grid->tiles[i][j].near_bomb > 0) //Test si au moins 1 bombe est dans une tuile adjacente
+                    {
                         grid->tiles[i][j].value = grid->tiles[i][j].near_bomb + '0';
                     }
                     else
@@ -162,6 +166,7 @@ void propag(int row, int col, Grid* grid) {
     }
 }
 
+//Demande à l'utilisateur la tuile qu'il veut découvrir
 int ask_tile(Grid* grid, int first_tile) {
     while (1)
     {        
@@ -175,13 +180,15 @@ int ask_tile(Grid* grid, int first_tile) {
             }
             else
             {
-                if (grid->tiles[row][col].near_bomb > 0) {
+                if (grid->tiles[row][col].near_bomb > 0) //Test si au moins 1 bombe est dans une tuile adjacente
+                {
                     grid->tiles[row][col].value = grid->tiles[row][col].near_bomb + '0';
                 }
                 else
                 {
                     grid->tiles[row][col].value = '0';
-                    if (first_tile) {
+                    if (first_tile) //Test si la tuile découverte est la première du démineur
+                    {
                         place_bomb(grid, row, col);
                         setvalue(grid);
                     }
@@ -194,15 +201,17 @@ int ask_tile(Grid* grid, int first_tile) {
     }
 }
 
+//Demande à l'utilisateur où est ce qu'il veut poser/retirer un drapeau
 int place_flag(Grid* grid) {
     int row = ask_number("Choississez la ligne : ", grid);
     int col = ask_number("Choississez la colonne : ", grid);
-    if (!grid->tiles[row][col].isDiscover && !grid->tiles[row][col].isFlag) {
+    if (!grid->tiles[row][col].isDiscover && !grid->tiles[row][col].isFlag) //Test si la tuile est caché et qu'il n'y a pas de drapeau
+    {
         grid->tiles[row][col].isDiscover = 1;
         grid->tiles[row][col].isFlag = 1;
         grid->tiles[row][col].value = 'F';
     }
-    else if (grid->tiles[row][col].isDiscover && grid->tiles[row][col].isFlag)
+    else if (grid->tiles[row][col].isDiscover && grid->tiles[row][col].isFlag) // Test si la tuile est découverte et qu'il y a un drapeau
     {
         grid->tiles[row][col].isDiscover = 0;
         grid->tiles[row][col].isFlag = 0;
@@ -211,6 +220,7 @@ int place_flag(Grid* grid) {
     return 0;
 }
 
+//Demande à l'utilisateur s'il veut découvrir une tuile ou intéragir avec n drapeau
 int ask_action(const char* message, Grid* grid) {
     int i;
     while (1) {
@@ -228,6 +238,7 @@ int ask_action(const char* message, Grid* grid) {
     }
 }
 
+//Permet l'affichage du démineur
 void show_grid(Grid* grid) {
     for (int i = -1; i < grid->size; i++) {
         if (i == -1) {
@@ -249,6 +260,7 @@ void show_grid(Grid* grid) {
     }
 }
 
+//Permet de lancer le jeu
 int game() {
     Grid g;
     g.size = 10;
@@ -263,7 +275,7 @@ int game() {
             return 0;
         }
     }
-    return 0;
+    return 0; 
 }
 int main()
 {
